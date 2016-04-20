@@ -1,0 +1,9 @@
+## JAVA ##
+*.jar
+
+## Project ##
+*.iml
+
+## Folder ##
+out/
+.idea
