@@ -58,5 +58,37 @@ public class DbConnection {
             System.err.println("Could not close database connection");
         }
     }
+
+    public static void disableAutoCommit() {
+        try {
+            conn.setAutoCommit(false);
+        } catch (SQLException e) {
+            System.err.println("Error disabling auto commit");
+        }
+    }
+
+    public static void enableAutoCommit() {
+        try {
+            conn.setAutoCommit(true);
+        } catch (SQLException e) {
+            System.err.println("Error enabling auto commit");
+        }
+    }
+
+    public static void commit() {
+        try {
+            conn.commit();
+        } catch (SQLException e) {
+            System.err.println("Error on commit");
+        }
+    }
+
+    public static void rollback() {
+        try {
+            conn.rollback();
+        } catch (SQLException e) {
+            System.err.println("Error on rollback");
+        }
+    }
 }
 
