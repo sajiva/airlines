@@ -41,13 +41,15 @@ public class DbConnection {
         }
     }
 
-    public static void execute(String sqlStatement) {
+    public static boolean execute(String sqlStatement) {
         Statement st = null;
         try {
             st = conn.createStatement();
             st.execute(sqlStatement);
+            return true;
         } catch (SQLException e) {
             System.err.println("Could not create statement: \n" + sqlStatement);
+            return false;
         }
     }
 

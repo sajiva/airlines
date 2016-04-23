@@ -9,7 +9,7 @@ Second project for the UH COSC 6340: Database System.
 
 ### How do I get set up? ###
 
-* Summary of set up
+* Put postgresql JDBC driver to the same folder of the class;
 * Configuration
 * Dependencies
 * Database configuration
