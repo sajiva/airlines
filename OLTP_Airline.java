@@ -19,7 +19,7 @@ public class OLTP_Airline {
     static int available_economy_seats;
     static int index_aircraft;
 
-    public static void main (String[] args) throws SQLException{
+    public static void main (String[] args) {
 
         // Connect to database
         if (!DbConnection.connect()) {
@@ -31,7 +31,7 @@ public class OLTP_Airline {
         DbConnection.closeConnection();
     }
 
-    public static void create_reservation_one(int customer_id, int seat_num) throws SQLException{
+    public static void create_reservation_one(int customer_id, int seat_num) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         DateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
         // Reservation Date & Time
@@ -60,65 +60,82 @@ public class OLTP_Airline {
         if(total_flight_instance>0){
             // flight id
             int index_flight_instance = simulate_flight_selection();
-            // get the price available seat
-            ResultSet rs = get_row_fromDB("flight_instance", "flight_id", index_flight_instance);
-            ResultSetMetaData metaData = rs.getMetaData();
-            if(rs.next()){
-                java.sql.Date depart_date = rs.getDate(2);
-                str_depart_date = dateFormat1.format(depart_date);
-                available_business_seats = rs.getInt(7);
-                available_economy_seats = rs.getInt(8);
-                if (idx_class == 0)
-                    price = rs.getInt(9);
-                else
-                    price = rs.getInt(10);
-                index_aircraft = rs.getInt(12);
-                System.out.println("Customer " + customer_id + " select Flight " + index_flight_instance + " -> class: " + class_type[idx_class] +
-                        ", Depart Date: " + str_depart_date + ", Available Bus. Seat: " + available_business_seats +
-                        ", Available Eco. Seat: " + available_economy_seats + ", Price: " + price + ", Aircraft: " + index_aircraft + "\n"
-                );
-            }
+            try {
+                // get the price available seat
+                ResultSet rs = get_row_fromDB("flight_instance", "flight_id", index_flight_instance);
 
-            boolean flag_insert = get_insert_flag(idx_class);
-            if (flag_insert) {
-                // insert the reservation
-                sqlQuery = GenerateSQL.insertReservation(customer_id, str_resv_date, str_resv_time, price, str_pay_date, str_pay_time, "single");
-                rs = DbConnection.executeQuery(sqlQuery);
-                if (rs.next()) {
-                    index_resv = rs.getInt(1);
-                    System.out.println("Reservation Number: " + index_resv + "\n");
+                ResultSetMetaData metaData = rs.getMetaData();
+
+                if(rs.next()){
+                    java.sql.Date depart_date = rs.getDate(2);
+                    str_depart_date = dateFormat1.format(depart_date);
+                    available_business_seats = rs.getInt(7);
+                    available_economy_seats = rs.getInt(8);
+                    if (idx_class == 0)
+                        price = rs.getInt(9);
+                    else
+                        price = rs.getInt(10);
+                    index_aircraft = rs.getInt(12);
+                    System.out.println("Customer " + customer_id + " select Flight " + index_flight_instance + " -> class: " + class_type[idx_class] +
+                            ", Depart Date: " + str_depart_date + ", Available Bus. Seat: " + available_business_seats +
+                            ", Available Eco. Seat: " + available_economy_seats + ", Price: " + price + ", Aircraft: " + index_aircraft + "\n"
+                    );
                 }
 
-                // update the flight_leg
-                sqlQuery = GenerateSQL.insertFlightLeg(index_flight_instance, seat_num, class_type[idx_class], index_resv, str_depart_date);
-                rs = DbConnection.executeQuery(sqlQuery);
-                if (rs.next()) {
-                    int index_flight_leg = rs.getInt(1);
-                    System.out.println("Flight Leg Number: " + index_flight_leg + "\n");
+                boolean flag_insert = get_insert_flag(idx_class);
+                if (flag_insert) {
+                    DbConnection.disableAutoCommit();
+                    // insert the reservation
+                    sqlQuery = GenerateSQL.insertReservation(customer_id, str_resv_date, str_resv_time, price, str_pay_date, str_pay_time, "single");
+                    rs = DbConnection.executeQuery(sqlQuery);
+                    if (rs.next()) {
+                        index_resv = rs.getInt(1);
+                        System.out.println("Reservation Number: " + index_resv + "\n");
+                    }
+
+                    // update the flight_leg
+                    sqlQuery = GenerateSQL.insertFlightLeg(index_flight_instance, seat_num, class_type[idx_class], index_resv, str_depart_date);
+                    rs = DbConnection.executeQuery(sqlQuery);
+                    if (rs.next()) {
+                        int index_flight_leg = rs.getInt(1);
+                        System.out.println("Flight Leg Number: " + index_flight_leg + "\n");
+                    }
+                    // update the flight instance
+                    sqlQuery = GenerateSQL.updateSeatNumMinusOne(column_available_seat, index_flight_instance, str_depart_date);
+                    rs = DbConnection.executeQuery(sqlQuery);
+                    if (rs.next()) {
+                        int available_seat = rs.getInt(1);
+                        System.out.println("Available seat: " + available_seat + "\n");
+                    }
+                    DbConnection.commit();
+                    DbConnection.enableAutoCommit();
+                } else {
+                    System.out.println("Customer " + customer_id + " cannot make reservation because of " + class_type[idx_class] + " seat num = 0");
                 }
-                // update the flight instance
-                sqlQuery = GenerateSQL.updateSeatNumMinusOne(column_available_seat, index_flight_instance, str_depart_date);
-                rs = DbConnection.executeQuery(sqlQuery);
-                if (rs.next()) {
-                    int available_seat = rs.getInt(1);
-                    System.out.println("Available seat: " + available_seat + "\n");
-                }
-            } else {
-                System.out.println("Customer " + customer_id + " cannot make reservation because of " + class_type[idx_class] + " seat num = 0");
+            } catch (SQLException e) {
+                e.printStackTrace();
+                System.err.println("Error creating reservation");
+                DbConnection.rollback();
+                System.exit(0);
             }
         }
     }
 
-    private static void initial() throws SQLException{
+    private static void initial() {
         get_total_fight_instance();
     }
 
-    private static void get_total_fight_instance() throws SQLException{
+    private static void get_total_fight_instance() {
         String sqlQuery = GenerateSQL.getTotalCount("flight_instance");
         ResultSet rs = DbConnection.executeQuery(sqlQuery);
-        if(rs.next()){
-            total_flight_instance = rs.getInt(1);
-            System.out.println("The total row in flight_instance is " + total_flight_instance);
+        try {
+            if(rs.next()){
+                total_flight_instance = rs.getInt(1);
+                System.out.println("The total row in flight_instance is " + total_flight_instance);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting total flight instance");
+            System.exit(0);
         }
     }
 
@@ -159,7 +176,7 @@ public class OLTP_Airline {
         return price;
     }*/
 
-    public static ResultSet get_row_fromDB(String table_name, String key_name, int key_value) throws SQLException {
+    public static ResultSet get_row_fromDB(String table_name, String key_name, int key_value) {
         String sqlQuery = GenerateSQL.getRow(table_name, key_name, key_value);
         ResultSet rs = DbConnection.executeQuery(sqlQuery);
         return rs;
