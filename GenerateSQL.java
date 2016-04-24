@@ -55,7 +55,7 @@ public class GenerateSQL {
                 customer_id + "," + "\'" +
                 trip_type + "\'" + ")\n" +
                 "RETURNING resv_id;";
-        System.out.println(sqlQuery);
+        //System.out.println(sqlQuery);
         return sqlQuery;
     }
 
@@ -63,14 +63,23 @@ public class GenerateSQL {
         String sqlQuery = "INSERT INTO flight_leg (flight_id, seat_num, class, resv_id, depart_date, flight_type)\n"
                 + "VALUES (" + flight_id + "," + seat_num + "," + "\'" + class_type + "\'" + "," + resv_id + "," + "\'" + depart_date + "\'" + "," + "\'" + "domestic" + "\'" + ")\n" +
                 "RETURNING flight_leg_id;";
-        System.out.println(sqlQuery);
+        //System.out.println(sqlQuery);
         return sqlQuery;
     }
 
     public static String updateSeatNumMinusOne(String column_name, int flight_id, String str_depart_date) {
         String sqlQuery = String.format("UPDATE flight_instance set %s = %s-1\n" +
                 "WHERE flight_id = %d AND depart_date = \'%s\'\n RETURNING %s;", column_name, column_name, flight_id, str_depart_date, column_name);
-        System.out.println(sqlQuery);
+        //System.out.println(sqlQuery);
+        return sqlQuery;
+    }
+
+    public static String getReservedSeatNumbers(int flight_id, String depart_date) {
+        String sqlQuery = "SELECT seat_num\n" +
+                "FROM flight_leg\n" +
+                "WHERE flight_id = " + flight_id + "\n" +
+                "AND depart_date = '" + depart_date + "';";
+
         return sqlQuery;
     }
 }

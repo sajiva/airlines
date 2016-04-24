@@ -4,9 +4,9 @@ import java.util.Properties;
 // Connect to the Postgres DB and execute SQL queries
 public class DbConnection {
 
-    private static Connection conn;
+    private Connection conn;
 
-    public static boolean connect() {
+    public boolean connect() {
         // Load JDBC driver
         try {
             Class.forName("org.postgresql.Driver");
@@ -23,6 +23,7 @@ public class DbConnection {
         try {
             conn = DriverManager.getConnection(
                     "jdbc:postgresql://129.7.243.243:5432/team12", myProp);
+            conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
         } catch (SQLException e) {
             System.err.println("Could not connect to database.");
             return false;
@@ -30,30 +31,30 @@ public class DbConnection {
         return true;
     }
 
-    public static ResultSet executeQuery(String sqlStatement) {
+    public ResultSet executeQuery(String sqlStatement) {
         Statement st = null;
         try {
             st = conn.createStatement();
             return st.executeQuery(sqlStatement);
         } catch (SQLException e) {
-            System.err.println("Could not create statement: \n" + sqlStatement);
+            System.err.println("Could not execute statement: \n" + sqlStatement);
             return null;
         }
     }
 
-    public static boolean execute(String sqlStatement) {
+    public boolean execute(String sqlStatement) {
         Statement st = null;
         try {
             st = conn.createStatement();
             st.execute(sqlStatement);
             return true;
         } catch (SQLException e) {
-            System.err.println("Could not create statement: \n" + sqlStatement);
+            System.err.println("Could not execute statement: \n" + sqlStatement);
             return false;
         }
     }
 
-    public static void closeConnection() {
+    public void closeConnection() {
         try {
             conn.close();
         } catch (SQLException e) {
@@ -61,7 +62,7 @@ public class DbConnection {
         }
     }
 
-    public static void disableAutoCommit() {
+    public void disableAutoCommit() {
         try {
             conn.setAutoCommit(false);
         } catch (SQLException e) {
@@ -69,7 +70,7 @@ public class DbConnection {
         }
     }
 
-    public static void enableAutoCommit() {
+    public void enableAutoCommit() {
         try {
             conn.setAutoCommit(true);
         } catch (SQLException e) {
@@ -77,7 +78,7 @@ public class DbConnection {
         }
     }
 
-    public static void commit() {
+    public void commit() {
         try {
             conn.commit();
         } catch (SQLException e) {
@@ -85,7 +86,7 @@ public class DbConnection {
         }
     }
 
-    public static void rollback() {
+    public void rollback() {
         try {
             conn.rollback();
         } catch (SQLException e) {
