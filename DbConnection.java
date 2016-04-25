@@ -23,7 +23,7 @@ public class DbConnection {
         try {
             conn = DriverManager.getConnection(
                     "jdbc:postgresql://129.7.243.243:5432/team12", myProp);
-            conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         } catch (SQLException e) {
             System.err.println("Could not connect to database.");
             return false;
@@ -38,6 +38,7 @@ public class DbConnection {
             return st.executeQuery(sqlStatement);
         } catch (SQLException e) {
             System.err.println("Could not execute statement: \n" + sqlStatement);
+            e.printStackTrace();
             return null;
         }
     }

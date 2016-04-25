@@ -36,7 +36,7 @@ public class GenerateSQL {
     }*/
 
     public static String getRow(String table_name, String key_name, int key_value) {
-        String sqlQuery = String.format("SELECT * FROM %s WHERE %s = %d;", table_name, key_name, key_value);
+        String sqlQuery = String.format("SELECT * FROM %s WHERE %s = %d FOR UPDATE;", table_name, key_name, key_value);
         System.out.println(sqlQuery);
         return sqlQuery;
     }
@@ -74,12 +74,37 @@ public class GenerateSQL {
         return sqlQuery;
     }
 
-    public static String getReservedSeatNumbers(int flight_id, String depart_date) {
+    public static String getReservedSeatNumbers(int flight_id, String depart_date, int idx_class) {
+        String resv_class = (idx_class == 0) ? "business" : "economy";
         String sqlQuery = "SELECT seat_num\n" +
                 "FROM flight_leg\n" +
                 "WHERE flight_id = " + flight_id + "\n" +
-                "AND depart_date = '" + depart_date + "';";
+                "AND depart_date = '" + depart_date + "'\n" +
+                "AND class = '" + resv_class + "';";
 
+        return sqlQuery;
+    }
+
+    public static String getFlightCapacity(int aircraft_id) {
+        String sqlQuery = "SELECT business_capacity, economy_capacity\n" +
+                "FROM aircraft\n" +
+                "WHERE aircraft_id = " + aircraft_id + ";";
+
+        return sqlQuery;
+    }
+
+    public static String getFlightInstance(int flight_id, String depart_date) {
+        String sqlQuery = String.format("SELECT available_bus_seat_num,\n" +
+                "\tavailable_eco_seat_num,\n" +
+                "\tprice_bus,\n" +
+                "\tprice_eco,\n" +
+                "\taircraft_id\n" +
+                "FROM flight_instance\n" +
+                "WHERE flight_id = %d\n" +
+                "\tAND depart_date = '%s'\n" +
+                "\tFOR\n" +
+                "\tUPDATE;", flight_id, depart_date);
+        //System.out.println(sqlQuery);
         return sqlQuery;
     }
 }

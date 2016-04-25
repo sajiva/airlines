@@ -12,11 +12,10 @@ public class OLTP_Airline extends Thread{
     static String [] class_type = {"business", "economy"};
 
     static int total_flight_instance;
-    static int total_business_seats;
-    static int total_economy_seats;
+//    static int total_business_seats;
+//    static int total_economy_seats;
     int available_business_seats;
     int available_economy_seats;
-    int index_aircraft;
     int customerId;
 
     DbConnection dbConnection;
@@ -27,10 +26,21 @@ public class OLTP_Airline extends Thread{
     }
 
     public static void main (String[] args) {
+        int nthreads = 100;
+        // create threads
+        OLTP_Airline[] threads = new OLTP_Airline[nthreads];
 
-        OLTP_Airline[] threads = new OLTP_Airline[5];
+        // start the threads
+        for (int i = 0; i < nthreads; i++) {
+            // sleep for 10 seconds
+            if ((i > 0) && ((i % 40) == 0)) {
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
 
-        for (int i = 0; i < threads.length; i++) {
             threads[i] = new OLTP_Airline();
             threads[i].start();
             System.out.println("Thread " + i + " started");
@@ -53,18 +63,19 @@ public class OLTP_Airline extends Thread{
 
     public void run() {
         if (!dbConnection.connect()) {
-            System.out.println("Cannot connected to database.");
+           // System.out.println("Cannot connect to database.");
             return;
         }
         customerId = simulate_customer_selection();
+        System.out.println("Customer Id: " + customerId);
         //initial();
-        //create_reservation_one(customerId, 1);
-        create_reservation(1, "2016-05-06", "single", 1);
+        //create_reservation_one(customerId, 10);
+        create_reservation(5, "2016-05-15", "single", 1);
         dbConnection.closeConnection();
 
     }
 
-    public synchronized void create_reservation_one(int customer_id, int seat_num) {
+    public void create_reservation_one(int customer_id, int seat_num) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         DateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
         // Reservation Date & Time
@@ -108,7 +119,7 @@ public class OLTP_Airline extends Thread{
                         price = rs.getInt(9);
                     else
                         price = rs.getInt(10);
-                    index_aircraft = rs.getInt(12);
+                    int index_aircraft = rs.getInt(12);
                     System.out.println("Customer " + customer_id + " select Flight " + index_flight_instance + " -> class: " + class_type[idx_class] +
                             ", Depart Date: " + str_depart_date + ", Available Bus. Seat: " + available_business_seats +
                             ", Available Eco. Seat: " + available_economy_seats + ", Price: " + price + ", Aircraft: " + index_aircraft + "\n"
@@ -141,7 +152,6 @@ public class OLTP_Airline extends Thread{
                         System.out.println("Available seat: " + available_seat + "\n");
                     }
                     dbConnection.commit();
-                    dbConnection.enableAutoCommit();
                 } else {
                     System.out.println("Customer " + customer_id + " cannot make reservation because of " + class_type[idx_class] + " seat num = 0");
                 }
@@ -149,12 +159,13 @@ public class OLTP_Airline extends Thread{
                 e.printStackTrace();
                 System.err.println("Error creating reservation");
                 dbConnection.rollback();
-                System.exit(0);
+            } finally {
+                dbConnection.enableAutoCommit();
             }
         }
     }
 
-    public void create_reservation(int flight_Id, String departDate, String trip_type, int idx_class) {
+    public void create_reservation(int flight_Id, String depart_date, String trip_type, int idx_class) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         DateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
         // Reservation Date & Time
@@ -163,47 +174,43 @@ public class OLTP_Airline extends Thread{
         String[] str_array = str_resv_date_time.split(" ");
         String str_resv_date = str_array[0];
         String str_resv_time = str_array[1];
-        // Pay Date & Time
-//        Date date_pay = new Date();
-//        String str_pay_date_time = dateFormat.format(date_pay);
-//        str_array = str_pay_date_time.split(" ");
+
         String str_pay_date = str_resv_date;
         String str_pay_time = str_resv_time;
 
-        String sqlQuery;
         // reservation table
         double price = 0;
         int available_seat = 0;
-        String str_depart_date = str_resv_date;
+        int index_aircraft =0;
         int index_resv = 0;
 
         //int idx_class = simulate_class_selection();
         //String column_price = get_column_price(idx_class);
-        String column_available_seat = get_column_available_seat(idx_class);
+
 
     //    if(total_flight_instance>0){
             // flight id
     //        int index_flight_instance = simulate_flight_selection();
             try {
+                dbConnection.disableAutoCommit();
                 // get the price available seat
-                ResultSet rs = get_row_fromDB("flight_instance", "flight_id", flight_Id);
+                ResultSet rs = getFlightInstance(flight_Id, depart_date);
 
-                //ResultSetMetaData metaData = rs.getMetaData();
 
                 if(rs.next()){
-                    java.sql.Date depart_date = rs.getDate(2);
-                    str_depart_date = dateFormat1.format(depart_date);
+//                    java.sql.Date depart_date = rs.getDate(2);
+//                    str_depart_date = dateFormat1.format(depart_date);
                     //available_business_seats = rs.getInt(7);
                     //available_economy_seats = rs.getInt(8);
                     if (idx_class == 0) {
-                        price = rs.getInt(9);
-                        available_seat = rs.getInt(7);
+                        price = rs.getInt(3);
+                        available_seat = rs.getInt(1);
                     }
                     else {
-                        price = rs.getInt(10);
-                        available_seat = rs.getInt(8);
+                        price = rs.getInt(4);
+                        available_seat = rs.getInt(2);
                     }
-//                    index_aircraft = rs.getInt(12);
+                    index_aircraft = rs.getInt(5);
 //                    System.out.println("Customer " + customer_id + " select Flight " + index_flight_instance + " -> class: " + class_type[idx_class] +
 //                            ", Depart Date: " + str_depart_date + ", Available Bus. Seat: " + available_business_seats +
 //                            ", Available Eco. Seat: " + available_economy_seats + ", Price: " + price + ", Aircraft: " + index_aircraft + "\n"
@@ -211,24 +218,30 @@ public class OLTP_Airline extends Thread{
 
                     //boolean flag_insert = get_insert_flag(idx_class);
                     if (available_seat > 0) {
-                        dbConnection.disableAutoCommit();
+
                         // insert the reservation
                         index_resv = addReservation(str_resv_date, str_resv_time, price, str_pay_date, str_pay_time, trip_type);
-
-                        List reservedSeats = checkSeatNumbersTaken(flight_Id, str_depart_date);
-                        int seat_num = simulate_seat_selection(available_seat, reservedSeats);
-
+                        int flight_capacity = 0;
+                        rs = getFlightCapacity(index_aircraft);
+                        if (rs.next())
+                            flight_capacity = (idx_class == 0) ? rs.getInt(1) : rs.getInt(2);
+                        // select seat number
+                        int seat_num = simulate_seat_selection(flight_Id, depart_date, flight_capacity, idx_class);
+                        if (seat_num == 0) {
+                            System.out.println("Customer " + customerId + " cannot make reservation because no seats available for " + class_type[idx_class] + " class");
+                        }
+                        //int seat_num = 1;
                         // update the flight_leg
-                        addFlightLeg(flight_Id, seat_num, idx_class, index_resv, str_depart_date);
+                        addFlightLeg(flight_Id, seat_num, idx_class, index_resv, depart_date);
                         // update the flight instance
-                        updateFlightInstance(column_available_seat, flight_Id, str_depart_date);
+                        String column_available_seat = get_column_available_seat(idx_class);
+                        updateFlightInstance(column_available_seat, flight_Id, depart_date);
                         dbConnection.commit();
-                        dbConnection.enableAutoCommit();
                     } else {
-                        System.out.println("Customer " + customerId + " cannot make reservation because of " + class_type[idx_class] + " seat num = 0");
+                        System.out.println("Customer " + customerId + " cannot make reservation because no seats available for " + class_type[idx_class] + " class");
                     }
                 } else {
-                    System.err.println("Flight " + flight_Id + "on date " + str_depart_date + " is invalid.");
+                    System.err.println("Flight " + flight_Id + "on date " + depart_date + " is invalid.");
                 }
 
 
@@ -236,7 +249,9 @@ public class OLTP_Airline extends Thread{
                 e.printStackTrace();
                 System.err.println("Error creating reservation");
                 dbConnection.rollback();
-                System.exit(0);
+            }
+            finally {
+                dbConnection.enableAutoCommit();
             }
     //    }
     }
@@ -294,7 +309,7 @@ public class OLTP_Airline extends Thread{
         return price;
     }*/
 
-    public synchronized ResultSet get_row_fromDB(String table_name, String key_name, int key_value) {
+    public ResultSet get_row_fromDB(String table_name, String key_name, int key_value) {
         String sqlQuery = GenerateSQL.getRow(table_name, key_name, key_value);
         ResultSet rs = dbConnection.executeQuery(sqlQuery);
         return rs;
@@ -313,26 +328,26 @@ public class OLTP_Airline extends Thread{
         return ran.nextInt(1000) + 1;
     }
 
-    public synchronized int simulate_seat_selection(int available_seats, List reservedSeats) {
-
+    public int simulate_seat_selection(int flight_id, String depart_date, int flight_capacity, int idx_class) {
+        List reservedSeats = checkSeatNumbersTaken(flight_id, depart_date, idx_class);
+        if (reservedSeats.size() == flight_capacity)
+            return 0;
         Random ran = new Random();
-        int seat_nr = ran.nextInt(available_seats) + 1;
+        int seat_nr = ran.nextInt(flight_capacity) + 1;
         while (reservedSeats.contains(seat_nr)) {
-            seat_nr = ran.nextInt(available_seats) + 1;
+            seat_nr = ran.nextInt(flight_capacity) + 1;
         }
-
+        System.out.println("Selecting seat number " + seat_nr);
         return seat_nr;
     }
 
-    public synchronized List checkSeatNumbersTaken(int flight_id, String depart_date) {
-        String sqlQuery = GenerateSQL.getReservedSeatNumbers(flight_id, depart_date);
+    public List checkSeatNumbersTaken(int flight_id, String depart_date, int idx_class) {
+        String sqlQuery = GenerateSQL.getReservedSeatNumbers(flight_id, depart_date, idx_class);
         ResultSet rs = dbConnection.executeQuery(sqlQuery);
         List reservedSeats = new ArrayList<>();
-        //int i = 1;
         try {
             while (rs.next()) {
                 reservedSeats.add(rs.getInt(1));
-                //i++;
             }
         } catch (SQLException e) {
             System.err.println("Error getting reserved seats");
@@ -362,12 +377,25 @@ public class OLTP_Airline extends Thread{
         }
     }
 
-    public  synchronized void updateFlightInstance(String column_available_seat, int flight_Id, String str_depart_date) throws SQLException {
+    public void updateFlightInstance(String column_available_seat, int flight_Id, String str_depart_date) throws SQLException {
         String sqlQuery = GenerateSQL.updateSeatNumMinusOne(column_available_seat, flight_Id, str_depart_date);
         ResultSet rs = dbConnection.executeQuery(sqlQuery);
         if (rs.next()) {
             int available_seats = rs.getInt(1);
             System.out.println("Available seats: " + available_seats + "\n");
         }
+    }
+
+    public ResultSet getFlightCapacity(int aircraft_id) {
+        String sqlQuery = GenerateSQL.getFlightCapacity(aircraft_id);
+        ResultSet rs = dbConnection.executeQuery(sqlQuery);
+        return rs;
+    }
+
+    public ResultSet getFlightInstance(int flight_id, String depart_date) {
+        String sqlQuery = GenerateSQL.getFlightInstance(flight_id, depart_date);
+        ResultSet rs = dbConnection.executeQuery(sqlQuery);
+        System.out.println("Getting flight instance...");
+        return rs;
     }
 }
