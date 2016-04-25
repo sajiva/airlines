@@ -36,7 +36,7 @@ public class GenerateSQL {
     }*/
 
     public static String getRow(String table_name, String key_name, int key_value) {
-        String sqlQuery = String.format("SELECT * FROM %s WHERE %s = %d;", table_name, key_name, key_value);
+        String sqlQuery = String.format("SELECT * FROM %s WHERE %s = %d FOR UPDATE;", table_name, key_name, key_value);
         System.out.println(sqlQuery);
         return sqlQuery;
     }
