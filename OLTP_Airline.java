@@ -24,7 +24,6 @@ public class OLTP_Airline extends Thread{
     public OLTP_Airline() {
         // Connect to database
         dbConnection = new DbConnection();
-
     }
 
     public static void main (String[] args) {
