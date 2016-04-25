@@ -26,7 +26,14 @@ public class OLTP_Airline extends Thread{
     }
 
     public static void main (String[] args) {
-        int nthreads = 100;
+        OLTP_Airline airline = new OLTP_Airline();
+        try {
+            airline.addRowstoSeats();
+        }catch (SQLException e){
+
+        }
+        /*
+        int nthreads = 1;
         // create threads
         OLTP_Airline[] threads = new OLTP_Airline[nthreads];
 
@@ -59,6 +66,7 @@ public class OLTP_Airline extends Thread{
                 System.err.println(e.getMessage());
             }
         }
+        */
     }
 
     public void run() {
@@ -66,11 +74,13 @@ public class OLTP_Airline extends Thread{
            // System.out.println("Cannot connect to database.");
             return;
         }
+
         customerId = simulate_customer_selection();
         System.out.println("Customer Id: " + customerId);
+        create_reservation(5, "2016-05-15", "single", 1);
         //initial();
         //create_reservation_one(customerId, 10);
-        create_reservation(5, "2016-05-15", "single", 1);
+
         dbConnection.closeConnection();
 
     }
@@ -397,5 +407,36 @@ public class OLTP_Airline extends Thread{
         ResultSet rs = dbConnection.executeQuery(sqlQuery);
         System.out.println("Getting flight instance...");
         return rs;
+    }
+
+    public void addRowstoSeats() throws SQLException{
+        String sqlQuery = String.format("SELECT * FROM flight_instance");
+        ResultSet rs = dbConnection.executeQuery(sqlQuery);
+        DateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+        while (rs.next()){
+            int flight_id = rs.getInt(1);
+            java.sql.Date depart_date = rs.getDate(2);
+            String str_depart_date = dateFormat1.format(depart_date);
+            int aircraft_id =rs.getInt(12);
+            sqlQuery = String.format("SELECT business_capacity, economy_capacity from aircraft where aircraft_id=%d", aircraft_id);
+            ResultSet rs_sub = dbConnection.executeQuery(sqlQuery);
+            int bus_capacity = 0;
+            int eco_capacity = 0;
+            if (rs_sub.next()){
+                bus_capacity = rs_sub.getInt(1);
+                eco_capacity = rs_sub.getInt(2);
+            }
+            System.out.println("Bus: " + bus_capacity + " Eco: " + eco_capacity);
+            for (int i = 1; i <= bus_capacity; i++){
+                sqlQuery = String.format("INSERT INTO seats (flight_id, depart_date, seat_id, class)\n" +
+                        "values(%d, \'%s\', %d, \'business\')\n", flight_id, depart_date, i);
+                dbConnection.execute(sqlQuery);
+            }
+            for (int i = 1; i <= eco_capacity; i++){
+                sqlQuery = String.format("INSERT INTO seats (flight_id, depart_date, seat_id, class)\n" +
+                        "values(%d, \'%s\', %d, \'economy\')\n", flight_id, depart_date, i + bus_capacity);
+                dbConnection.execute(sqlQuery);
+            }
+        }
     }
 }
