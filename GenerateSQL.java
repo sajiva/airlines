@@ -24,8 +24,8 @@ public class GenerateSQL {
     }
 
     public static String insertFlightLeg(int flight_id, int resv_id, String depart_date){
-        String sqlQuery = "INSERT INTO flight_leg (flight_id, resv_id, depart_date, flight_type)\n"
-                + "VALUES ( " + flight_id + "," + resv_id + ",\'" + depart_date + "\',\'domestic\')\n" +
+        String sqlQuery = "INSERT INTO flight_leg (flight_id, resv_id, depart_date)\n"
+                + "VALUES ( " + flight_id + "," + resv_id + ",\'" + depart_date + "\')\n" +
                 "RETURNING flight_leg_id;";
 
         return sqlQuery;
