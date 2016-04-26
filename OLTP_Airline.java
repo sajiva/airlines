@@ -26,13 +26,13 @@ public class OLTP_Airline extends Thread{
     }
 
     public static void main (String[] args) {
-        OLTP_Airline airline = new OLTP_Airline();
+        /*OLTP_Airline airline = new OLTP_Airline();
         try {
             airline.addRowstoSeats();
         }catch (SQLException e){
 
-        }
-        /*
+        }*/
+
         int nthreads = 1;
         // create threads
         OLTP_Airline[] threads = new OLTP_Airline[nthreads];
@@ -66,7 +66,7 @@ public class OLTP_Airline extends Thread{
                 System.err.println(e.getMessage());
             }
         }
-        */
+
     }
 
     public void run() {
@@ -417,7 +417,7 @@ public class OLTP_Airline extends Thread{
             int flight_id = rs.getInt(1);
             java.sql.Date depart_date = rs.getDate(2);
             String str_depart_date = dateFormat1.format(depart_date);
-            int aircraft_id =rs.getInt(12);
+            int aircraft_id =rs.getInt(10);
             sqlQuery = String.format("SELECT business_capacity, economy_capacity from aircraft where aircraft_id=%d", aircraft_id);
             ResultSet rs_sub = dbConnection.executeQuery(sqlQuery);
             int bus_capacity = 0;
