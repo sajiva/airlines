@@ -1,3 +1,9 @@
+/**********************************************************************************************/
+/* COSC6340: Database Systems                                                                 */
+/* Project 2: ER Model and OLTP for an Airline Database                                       */
+/* Project team: Sajiva Pradhan (1007766), Xiang Xu (1356333)                                 */
+/**********************************************************************************************/
+
 import java.sql.*;
 import java.util.Properties;
 

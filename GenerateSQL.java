@@ -1,56 +1,23 @@
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+/**********************************************************************************************/
+/* COSC6340: Database Systems                                                                 */
+/* Project 2: ER Model and OLTP for an Airline Database                                       */
+/* Project team: Sajiva Pradhan (1007766), Xiang Xu (1356333)                                 */
+/**********************************************************************************************/
 
 public class GenerateSQL {
-//    public static void createLog() throws IOException{
-//        FileWriter writer = new FileWriter("log.sql");
-//        writer.close();
-//    }
-//
-//    public static void writeLog(String sqlQuery) throws IOException{
-//        Files.write(Paths.get("log.sql"), sqlQuery.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-//    }
-//
-//    public static String getTotalCount(String tableName){
-//        String sqlQuery = String.format("SELECT COUNT(*) FROM %s;", tableName);
-//        System.out.println(sqlQuery);
-//        return  sqlQuery;
-//    }
-    /*
-    public static String getNthRowItem(String tableName, String columnName, int rowNum){
-        String sqlQuery = String.format("SELECT %s FROM %s LIMIT 1 OFFSET %s;\n", columnName, tableName, rowNum-1);
-        System.out.println(sqlQuery);
-        return sqlQuery;
-    }*/
-    /*
-    public static String getRow(String tableName, int rowNum){
-        String sqlQuery = String.format("SELECT * FROM %s LIMIT 1 OFFSET %s;\n", tableName, rowNum-1);
-        System.out.println(sqlQuery);
-        return sqlQuery;
-    }*/
 
-//    public static String getRow(String table_name, String key_name, int key_value) {
-//        String sqlQuery = String.format("SELECT * FROM %s WHERE %s = %d FOR UPDATE;", table_name, key_name, key_value);
-//        System.out.println(sqlQuery);
-//        return sqlQuery;
-//    }
-
-    public static String insertReservation(int customer_id, String str_resv_date, String str_resv_time, double price,
-                                           String str_pay_date, String str_pay_time, String trip_type) {
+    public static String insertReservation(int customer_id, String str_resv_date, String str_resv_time, double price, String trip_type) {
         String sqlQuery = "INSERT INTO reservation (resv_date, resv_time, resv_status, pay_amount, pay_method, pay_date, pay_time, customer_id, resv_type)\n"
-                + "VALUES (" +
-                "\'" + str_resv_date + "\'" + "," +
-                "\'" + str_resv_time + "\'" + "," +
-                "\'" + "confirmed" + "\'" + "," +
-                price + ", " +
-                "\'" + "card" + "\'" + "," +
-                "\'" + str_pay_date + "\'" + "," +
-                "\'" + str_pay_time + "\'" + "," +
-                customer_id + "," + "\'" +
-                trip_type + "\'" + ")\n" +
+                + "VALUES (\n" +
+                "\'" + str_resv_date + "\',\n" +
+                "\'" + str_resv_time + "\',\n" +
+                "\'" + "confirmed" + "\',\n" +
+                price + ",\n" +
+                "\'" + "card" + "\',\n" +
+                "\'" + str_resv_date + "\',\n" +
+                "\'" + str_resv_time + "\',\n" +
+                customer_id + ",\n" +
+                "\'" + trip_type + "\')\n" +
                 "RETURNING resv_id;";
 
         return sqlQuery;
@@ -58,18 +25,11 @@ public class GenerateSQL {
 
     public static String insertFlightLeg(int flight_id, int resv_id, String depart_date){
         String sqlQuery = "INSERT INTO flight_leg (flight_id, resv_id, depart_date, flight_type)\n"
-                + "VALUES (" + flight_id + "," + resv_id + "," + "\'" + depart_date + "\'" + "," + "\'" + "domestic" + "\'" + ")\n" +
+                + "VALUES ( " + flight_id + "," + resv_id + ",\'" + depart_date + "\',\'domestic\')\n" +
                 "RETURNING flight_leg_id;";
 
         return sqlQuery;
     }
-
-//    public static String updateSeatNumMinusOne(String column_name, int flight_id, String str_depart_date) {
-//        String sqlQuery = String.format("UPDATE flight_instance set %s = %s-1\n" +
-//                "WHERE flight_id = %d AND depart_date = \'%s\'\n RETURNING %s;", column_name, column_name, flight_id, str_depart_date, column_name);
-//        //System.out.println(sqlQuery);
-//        return sqlQuery;
-//    }
 
     public static String getAvailableSeatNumbers(int flight_id, String depart_date, int idx_class) {
         String resv_class = (idx_class == 0) ? "business" : "economy";
