@@ -7,38 +7,39 @@
 public class GenerateSQL {
 
     public static String insertReservation(int customer_id, String str_resv_date, String str_resv_time, double price, String trip_type) {
-        String sqlQuery = "INSERT INTO reservation (resv_date, resv_time, resv_status, pay_amount, pay_method, pay_date, pay_time, customer_id, resv_type)\n"
+        String sqlQuery = String.format("INSERT INTO reservation (resv_date, resv_time, resv_status, pay_amount, " +
+                "pay_method, pay_date, pay_time, customer_id, resv_type)\n"
                 + "VALUES (\n" +
-                "\'" + str_resv_date + "\',\n" +
-                "\'" + str_resv_time + "\',\n" +
-                "\'" + "confirmed" + "\',\n" +
-                price + ",\n" +
-                "\'" + "card" + "\',\n" +
-                "\'" + str_resv_date + "\',\n" +
-                "\'" + str_resv_time + "\',\n" +
-                customer_id + ",\n" +
-                "\'" + trip_type + "\')\n" +
-                "RETURNING resv_id;";
+                "\'%s\',\n" +
+                "\'%s\',\n" +
+                "\'confirmed\',\n" +
+                "%.2f,\n" +
+                "\'card\',\n" +
+                "\'%s\',\n" +
+                "\'%s\',\n" +
+                "%d,\n" +
+                "\'%s\')\n" +
+                "RETURNING resv_id;", str_resv_date, str_resv_time, price, str_resv_date, str_resv_time, customer_id, trip_type);
 
         return sqlQuery;
     }
 
     public static String insertFlightLeg(int flight_id, int resv_id, String depart_date){
-        String sqlQuery = "INSERT INTO flight_leg (flight_id, resv_id, depart_date)\n"
-                + "VALUES ( " + flight_id + "," + resv_id + ",\'" + depart_date + "\')\n" +
-                "RETURNING flight_leg_id;";
+        String sqlQuery = String.format("INSERT INTO flight_leg (flight_id, resv_id, depart_date)\n"
+                + "VALUES ( %d, %d, \'%s\')\n" +
+                "RETURNING flight_leg_id;", flight_id, resv_id, depart_date);
 
         return sqlQuery;
     }
 
     public static String getAvailableSeatNumbers(int flight_id, String depart_date, int idx_class) {
         String resv_class = (idx_class == 0) ? "business" : "economy";
-        String sqlQuery = "SELECT seat_id\n" +
+        String sqlQuery = String.format("SELECT seat_id\n" +
                 "FROM seats\n" +
-                "WHERE flight_id = " + flight_id + "\n" +
-                "AND depart_date = '" + depart_date + "'\n" +
-                "AND class = '" + resv_class + "'\n" +
-                "AND flight_leg_id is NULL;";
+                "WHERE flight_id = %d\n" +
+                "AND depart_date = \'%s\'\n" +
+                "AND class = \'%s\'\n" +
+                "AND flight_leg_id is NULL;", flight_id, depart_date, resv_class);
         return sqlQuery;
     }
 
