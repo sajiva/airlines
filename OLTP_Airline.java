@@ -44,7 +44,8 @@ public class OLTP_Airline extends Thread {
 
         // create threads
         OLTP_Airline[] threads = new OLTP_Airline[nthreads];
-
+        int threads_started = 0;
+        int threads_closed = 0;
         // start the threads
         for (int i = 0; i < nthreads; i++) {
             if ((i > 0) && ((i % 40) == 0)) {
@@ -57,18 +58,23 @@ public class OLTP_Airline extends Thread {
 
             threads[i] = new OLTP_Airline();
             threads[i].start();
-            System.out.println("Thread " + i + " started");
+            threads_started++;
+            //System.out.println("Thread " + i + " started");
         }
 
         // Wait for the threads to finish
         for (int i = 0; i < threads.length; i++) {
             try {
                 threads[i].join();
-                System.out.println("Thread " + i + " end");
+                threads_closed++;
+                //System.out.println("Thread " + i + " end");
             } catch (InterruptedException e) {
                 System.err.println(e.getMessage());
             }
         }
+
+        System.out.println("Number of threads started: " + threads_started);
+        System.out.println("Number of threads closed: " + threads_closed);
     }
 
     public void run() {
@@ -76,12 +82,7 @@ public class OLTP_Airline extends Thread {
             return;
         }
         customerId = simulate_customer_selection();
-
-        Map<Integer, String> trip = new HashMap<>();
-        trip.put(6, "2016-05-18");
-        trip.put(7, "2016-05-18");
-        trip.put(8, "2016-06-08");
-        create_reservation(trip);
+        create_reservation(simulate_trip_selection());
 
         dbConnection.closeConnection();
     }
@@ -191,12 +192,12 @@ public class OLTP_Airline extends Thread {
                     System.out.println("Customer " + customerId + " cannot make reservation.\n" +
                             "Seat number " + seat_nr + " on flight " + flight_Id + " is assigned to another customer.");
                     dbConnection.rollback();
-                    break;
+                    return;
                 }
                 // reserve the seat number
                 if (!reserveSeatNumber(flight_leg, flight_Id, depart_date, seat_nr)) {
                     dbConnection.rollback();
-                    break;
+                    return;
                 }
             }
             // commit the transaction
@@ -215,6 +216,29 @@ public class OLTP_Airline extends Thread {
         Random ran = new Random();
         return ran.nextInt(1000) + 1;
     }
+
+    private HashMap<Integer, String> simulate_trip_selection() {
+        HashMap<Integer, String> trip = new HashMap<>();
+        int ran = new Random().nextInt(3) + 1;
+
+        switch (ran) {
+            case 1:
+                trip.put(1, "2016-05-06");
+                break;
+            case 2:
+                trip.put(4, "2016-05-15");
+                trip.put(5, "2016-05-15");
+                break;
+            case 3:
+                trip.put(6, "2016-05-18");
+                trip.put(7, "2016-05-18");
+                trip.put(8, "2016-06-08");
+                break;
+        }
+
+        return trip;
+    }
+
 
     private int simulate_class_selection(){
         Random ran = new Random();
@@ -292,7 +316,7 @@ public class OLTP_Airline extends Thread {
         int index_resv = -1;
         if (rs.next()) {
             index_resv = rs.getInt(1);
-            System.out.println("Reservation Number: " + index_resv + "\n");
+            //System.out.println("Reservation Number: " + index_resv + "\n");
         }
         return index_resv;
     }
@@ -303,13 +327,13 @@ public class OLTP_Airline extends Thread {
         int index_flight_leg = -1;
         if (rs.next()) {
             index_flight_leg = rs.getInt(1);
-            System.out.println("Flight Leg Number: " + index_flight_leg + "\n");
+            //System.out.println("Flight Leg Number: " + index_flight_leg + "\n");
         }
         return index_flight_leg;
     }
 
     private boolean reserveSeatNumber(int flight_leg_id, int flight_id, String depart_date, int seat_nr) {
-        System.out.println("Reserving seat number " + seat_nr);
+        //System.out.println("Reserving seat number " + seat_nr);
         String sqlQuery = GenerateSQL.updateSeats(flight_leg_id, flight_id, depart_date, seat_nr);
         return dbConnection.execute(sqlQuery);
     }
